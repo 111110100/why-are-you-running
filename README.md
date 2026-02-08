@@ -3,6 +3,8 @@
 ![Why Are You Running?](./wayr.webp)
 > *Named after the popular meme: "Why are you running?!"*
 > 
+> Inspired from Why is this Running, a program written in Go. This one only requires Python.
+> 
 > **Version 1.0.4** - Blazing fast tree building!
 
 A diagnostic utility that answers the question: **Why is this process/service/port running?**
