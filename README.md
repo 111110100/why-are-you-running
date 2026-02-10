@@ -1,11 +1,8 @@
 # wayr - Why Are You Running?
 
-![Why Are You Running?](./wayr.webp)
 > *Named after the popular meme: "Why are you running?!"*
-> 
-> Inspired from Why is this Running, a program written in Go. This one only requires Python.
-> 
-> **Version 1.0.4** - Blazing fast tree building!
+>
+> **Version 1.0.8** - Direct raw man page parsing for maximum reliability
 
 A diagnostic utility that answers the question: **Why is this process/service/port running?**
 
@@ -19,6 +16,7 @@ Existing tools (`ps`, `top`, `lsof`, `ss`, `systemctl`, `docker ps`) show *what*
 - 🎯 **Multiple Entry Points** - Query by process name, PID, or port
 - 🐳 **Multi-Source Detection** - Automatically detects systemd, Docker, PM2, cron, and more
 - 📊 **Context Awareness** - Shows git repos, containers, working directories, and listening ports
+- 📖 **Man Page Integration** - Displays command descriptions from man pages ("What it is")
 - ⚠️ **Smart Warnings** - Alerts on root processes, public binds, high memory, and more
 - 🎨 **Multiple Output Modes** - Full report, short ancestry, tree view, or JSON
 - 🔒 **Read-Only & Safe** - No destructive operations, just analysis
@@ -30,7 +28,7 @@ Existing tools (`ps`, `top`, `lsof`, `ss`, `systemctl`, `docker ps`) show *what*
 
 ```bash
 # Download and make executable
-curl -o wayr https://raw.githubusercontent.com/111110100/wayr/main/wayr.py
+curl -o wayr https://raw.githubusercontent.com/yourusername/wayr/main/wayr.py
 chmod +x wayr
 sudo mv wayr /usr/local/bin/
 ```
@@ -38,7 +36,7 @@ sudo mv wayr /usr/local/bin/
 ### From Source
 
 ```bash
-git clone https://github.com/111110100/wayr.git
+git clone https://github.com/yourusername/wayr.git
 cd wayr
 chmod +x wayr.py
 sudo ln -s "$(pwd)/wayr.py" /usr/local/bin/wayr
@@ -97,6 +95,7 @@ Target      : node
 Process     : node (pid 14233)
 User        : pm2
 Command     : node index.js
+What it is  : Server-side JavaScript runtime
 Started     : 2 days ago (Mon 2025-02-02 11:42:10 +05:30)
 Restarts    : 1
 Why It Exists :
@@ -333,6 +332,7 @@ Options:
   --env               Show environment variables
   --warnings          Show only warnings
   --no-color          Disable colored output
+  --debug-man         Debug man page parsing (shows raw NAME section)
   -v, --version       Show version
   -h, --help          Show help message
 ```
@@ -435,25 +435,25 @@ MIT License - see LICENSE file for details
 
 ## FAQ
 
-**Q: Why "wayr"?**  
+**Q: Why "wayr"?**
 A: Named after the "Why are you running?!" meme. Also short for "Why Are You Running".
 
-**Q: Does it work on macOS?**  
+**Q: Does it work on macOS?**
 A: Yes! Version 1.0.2+ has full macOS support using `ps`, `lsof`, and native macOS tools.
 
-**Q: Does it work on Linux?**  
+**Q: Does it work on Linux?**
 A: Yes! Linux has full support with both modern tools (`ss`, `systemctl`) and `/proc` filesystem fallbacks.
 
-**Q: Can it kill processes?**  
+**Q: Can it kill processes?**
 A: No. wayr is strictly read-only and diagnostic. Use `kill`, `systemctl stop`, `docker stop`, etc.
 
-**Q: Why not just use ps/top/systemctl?**  
+**Q: Why not just use ps/top/systemctl?**
 A: Those tools show *state*. wayr shows *causality*. It connects the dots between multiple layers.
 
-**Q: Does it require root?**  
+**Q: Does it require root?**
 A: No, but some features require elevated privileges (reading other users' info, etc.).
 
-**Q: What about Windows?**  
+**Q: What about Windows?**
 A: Not currently supported. wayr requires Unix-like process management (Linux/macOS/BSD).
 
 ## Author

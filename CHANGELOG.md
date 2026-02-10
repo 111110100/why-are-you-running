@@ -2,6 +2,107 @@
 
 All notable changes to the wayr project will be documented in this file.
 
+## [1.0.8] - 2025-02-07
+
+### Enhanced
+- **Direct raw man page file parsing** for even better reliability
+  - Now uses `man -w` to get the path to the actual man page file
+  - Reads and parses the raw source file directly (e.g., `/usr/share/man/man8/talagentd.8`)
+  - More reliable than parsing formatted `man` output
+  - Avoids issues with terminal width, formatting, and character encoding
+  - Falls back to formatted `man` output if raw file can't be read
+
+### Performance
+- Slightly faster for BSD mdoc pages since we can parse the raw file directly
+- Avoids spawning `man` formatter when raw file is available
+
+### Technical Details
+The parsing now follows this order:
+1. Get man page file path with `man -w <command>`
+2. If file exists, read it directly and look for `.Nd` macro
+3. If raw file parsing fails, fall back to `man <command>` formatted output
+4. Parse formatted output for `.Nd` macro or standard NAME section
+
+This makes parsing more robust, especially for mdoc format pages on macOS/BSD.
+
+## [1.0.7] - 2025-02-07
+
+### Fixed
+- **🎉 BSD mdoc format support** - Major improvement for macOS users!
+  - Now parses `.Nd` macro from BSD-style man pages
+  - Fixes issue where macOS man pages weren't showing descriptions
+  - Example: `talagentd` now correctly shows "Helper agent for application lifecycle features"
+  - `.Nd` macro is checked FIRST before falling back to standard NAME section parsing
+
+### Enhanced
+- Man page parsing order:
+  1. Try BSD mdoc format (`.Nd` macro) - common on macOS/BSD
+  2. Try standard NAME section - common on Linux
+  3. Try alternative formats as fallback
+
+### Technical Details
+BSD mdoc format uses macros like:
+```
+.Sh NAME
+.Nm talagentd
+.Nd helper agent for application lifecycle features
+```
+
+The parser now extracts the text after `.Nd` directly, which is the standard way to define descriptions in BSD man pages.
+
+## [1.0.6] - 2025-02-07
+
+### Fixed
+- **Improved man page parsing robustness**
+  - Better handling of various NAME section formats
+  - Case-insensitive NAME section detection
+  - Support for more dash variants (–, —, −, -)
+  - Better handling of commands without standard dash separators
+  - Minimum length check (5 chars) to avoid parsing errors
+  - Trailing period removal from descriptions
+
+### Added
+- **`--debug-man` flag** for troubleshooting man page parsing issues
+  - Shows exactly what's being parsed from man pages
+  - Displays raw NAME section content
+  - Shows step-by-step extraction process
+  - Helpful for diagnosing why descriptions aren't appearing
+  - Example: `wayr --pid 1234 --debug-man`
+
+### Enhanced
+- Man page parsing now handles more edge cases:
+  - Commands with version numbers in NAME (e.g., `command(1)`)
+  - Multiple command aliases (e.g., `cmd1, cmd2 - description`)
+  - Non-standard formats without dash separators
+  - Descriptions that start with lowercase letters
+  - Very long or very short NAME sections
+
+## [1.0.5] - 2025-02-07
+
+### Added
+- **"What it is" field**: Now shows command description from man pages
+  - Automatically extracts the NAME section from man pages
+  - Displays human-readable description of what the command does
+  - Example: For `cat`, shows "Concatenate and print files"
+  - Handles multiple dash styles (–, —, -)
+  - Smart interpreter detection: For `python3 script.py`, tries to get description of the script
+  - Only shown when man page is available
+
+### Enhanced
+- `print_process_info()` now includes command description between Command and Started
+- New function `get_command_description()` that parses man page NAME sections
+- Supports various man page formats (BSD, GNU, etc.)
+
+### Example Output
+```
+Target      : cat
+Process     : cat (pid 12345)
+User        : john
+Command     : cat /var/log/syslog
+What it is  : Concatenate and print files
+Started     : 5 minutes ago (Sat 2025-02-07 10:30:00)
+```
+
 ## [1.0.4] - 2025-02-07
 
 ### Performance
