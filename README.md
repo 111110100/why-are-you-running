@@ -30,7 +30,7 @@ Existing tools (`ps`, `top`, `lsof`, `ss`, `systemctl`, `docker ps`) show *what*
 
 ```bash
 # Download and make executable
-curl -o wayr https://raw.githubusercontent.com/yourusername/wayr/main/wayr.py
+curl -o wayr https://raw.githubusercontent.com/111110100/wayr/main/wayr.py
 chmod +x wayr
 sudo mv wayr /usr/local/bin/
 ```
@@ -38,7 +38,7 @@ sudo mv wayr /usr/local/bin/
 ### From Source
 
 ```bash
-git clone https://github.com/yourusername/wayr.git
+git clone https://github.com/111110100/wayr.git
 cd wayr
 chmod +x wayr.py
 sudo ln -s "$(pwd)/wayr.py" /usr/local/bin/wayr
