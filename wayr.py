@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import List, Optional, Dict, Tuple
 
 
-VERSION = "1.0.8"
+VERSION = "1.0.9"
 
 # Detect operating system
 IS_MACOS = platform.system() == 'Darwin'
@@ -766,7 +766,8 @@ def get_command_description(cmd: str, debug: bool = False) -> Optional[str]:
                     print(f"{Colors.GREEN}[DEBUG] Read raw man page file ({len(raw_content)} chars){Colors.RESET}")
 
                 # Parse the raw file directly (more reliable than formatted output)
-                # First, try BSD mdoc format (.Nd macro)
+
+                # 1. Try BSD mdoc format (.Nd macro)
                 for line in raw_content.split('\n'):
                     if line.strip().startswith('.Nd '):
                         desc = line.strip()[4:].strip()
@@ -778,7 +779,106 @@ def get_command_description(cmd: str, debug: bool = False) -> Optional[str]:
                             return desc
 
                 if debug:
-                    print(f"{Colors.YELLOW}[DEBUG] No .Nd macro in raw file, will try formatted output{Colors.RESET}")
+                    print(f"{Colors.YELLOW}[DEBUG] No .Nd macro in raw file, trying troff format{Colors.RESET}")
+
+                # 2. Try troff/groff format (.SH NAME section)
+                # Common patterns:
+                # .SH "NAME"  or  .SH NAME
+                # followed by lines like:
+                # npm - javascript package manager
+                # or with formatting:
+                # \fBnpm\fR - javascript package manager
+                # or:
+                # .LP
+                # btop - Resource monitor...
+
+                lines = raw_content.split('\n')
+                in_name_section = False
+                name_content_lines = []
+
+                for i, line in enumerate(lines):
+                    stripped = line.strip()
+
+                    # Detect .SH NAME section
+                    if re.match(r'^\.SH\s+"?NAME"?\s*$', stripped, re.IGNORECASE):
+                        in_name_section = True
+                        if debug:
+                            print(f"{Colors.CYAN}[DEBUG] Found .SH NAME section at line {i}{Colors.RESET}")
+                        continue
+
+                    # Exit NAME section when we hit another .SH
+                    if in_name_section and stripped.startswith('.SH '):
+                        if debug:
+                            print(f"{Colors.CYAN}[DEBUG] Exiting NAME section at line {i}{Colors.RESET}")
+                        break
+
+                    # Collect content in NAME section
+                    if in_name_section:
+                        # Skip common troff directives that don't contain description
+                        if stripped.startswith('.LP') or stripped.startswith('.PP'):
+                            continue
+                        # Skip empty lines
+                        if not stripped:
+                            continue
+                        # Skip lines that are only troff commands
+                        if stripped.startswith('.') and len(stripped.split()) <= 2:
+                            continue
+
+                        # Add non-directive lines
+                        if not stripped.startswith('.'):
+                            name_content_lines.append(stripped)
+                        # Also check for inline text after directives
+                        elif ' ' in stripped and not stripped.startswith('.SH'):
+                            # Lines like ".B name - description"
+                            content = stripped.split(None, 1)
+                            if len(content) > 1:
+                                name_content_lines.append(content[1])
+
+                if name_content_lines:
+                    # Join and clean up troff formatting
+                    description = ' '.join(name_content_lines)
+
+                    # Remove troff formatting codes (comprehensive cleanup)
+                    # Font changes: \fB (bold), \fI (italic), \fR (roman), \fP (previous)
+                    description = re.sub(r'\\f.', '', description)
+                    # Two-char font codes: \f(XX
+                    description = re.sub(r'\\f\([A-Z]{2}\)', '', description)
+                    # Special characters
+                    description = description.replace('\\-', '-')  # minus/hyphen
+                    description = description.replace('\\ ', ' ')  # non-breaking space
+                    description = description.replace('\\&', '')   # zero-width space
+                    description = description.replace('\\(em', '—')  # em-dash
+                    description = description.replace('\\(en', '–')  # en-dash
+                    # Remove any remaining backslash escapes (be conservative)
+                    description = re.sub(r'\\(.)', r'\1', description)
+
+                    # Clean up whitespace
+                    description = ' '.join(description.split())
+
+                    if debug:
+                        print(f"{Colors.MAGENTA}[DEBUG] Raw troff NAME content: {repr(description)}{Colors.RESET}")
+
+                    # Try to extract after dash
+                    for dash in ['–', '—', '−', '-']:
+                        if dash in description:
+                            parts = description.split(dash, 1)
+                            if len(parts) == 2:
+                                desc = parts[1].strip()
+                                if len(desc) >= 5:
+                                    if desc[0].islower():
+                                        desc = desc[0].upper() + desc[1:]
+                                    if debug:
+                                        print(f"{Colors.GREEN}[DEBUG] Extracted from troff NAME: {repr(desc)}{Colors.RESET}")
+                                    return desc
+
+                    # If no dash, return whole description if reasonable
+                    if 10 <= len(description) <= 200:
+                        if debug:
+                            print(f"{Colors.GREEN}[DEBUG] Returning whole troff NAME content: {repr(description)}{Colors.RESET}")
+                        return description
+
+                if debug:
+                    print(f"{Colors.YELLOW}[DEBUG] No troff NAME content found, will try formatted output{Colors.RESET}")
 
             except Exception as e:
                 if debug:

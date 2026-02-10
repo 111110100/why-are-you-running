@@ -2,6 +2,38 @@
 
 All notable changes to the wayr project will be documented in this file.
 
+## [1.0.9] - 2025-02-07
+
+### Added
+- **Troff/groff format support** for man pages
+  - Now parses `.SH NAME` sections from troff format man pages
+  - Handles common troff formatting codes: `\fB`, `\fI`, `\fR`, `\fP`
+  - Removes troff special characters: `\-`, `\&`, `\\`, `\(em`, `\(en`
+  - Works with popular tools using troff format: `npm`, `btop`, and many others
+  - Example: `npm` now shows "Javascript package manager"
+  - Example: `btop` now shows "Resource monitor that shows usage and stats..."
+
+### Enhanced
+- Man page parsing now supports **three formats**:
+  1. **BSD mdoc** (`.Nd` macro) - macOS/BSD systems
+  2. **Troff/groff** (`.SH NAME` section) - Linux, many modern tools
+  3. **Standard formatted** (plain text NAME section) - fallback
+
+### Technical Details
+Troff format example:
+```
+.SH "NAME"
+\fBnpm\fR - javascript package manager
+```
+
+Parser extracts:
+1. Finds `.SH NAME` or `.SH "NAME"`
+2. Collects content until next `.SH`
+3. Removes troff formatting codes
+4. Extracts description after dash
+
+This completes support for all major man page formats!
+
 ## [1.0.8] - 2025-02-07
 
 ### Enhanced
@@ -33,13 +65,13 @@ This makes parsing more robust, especially for mdoc format pages on macOS/BSD.
   - Fixes issue where macOS man pages weren't showing descriptions
   - Example: `talagentd` now correctly shows "Helper agent for application lifecycle features"
   - `.Nd` macro is checked FIRST before falling back to standard NAME section parsing
-
+  
 ### Enhanced
 - Man page parsing order:
   1. Try BSD mdoc format (`.Nd` macro) - common on macOS/BSD
   2. Try standard NAME section - common on Linux
   3. Try alternative formats as fallback
-
+  
 ### Technical Details
 BSD mdoc format uses macros like:
 ```
