@@ -1,5 +1,6 @@
 # wayr - Why Are You Running?
 
+![Why are you running?](./wayr.webp)
 > *Named after the popular meme: "Why are you running?!"*
 >
 > **Version 1.0.8** - Direct raw man page parsing for maximum reliability
